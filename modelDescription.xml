@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <fmiModelDescription
   fmiVersion="2.0"
-  modelName="RandomPoints500"
+  modelName="InertialModel"
   guid="{9b5f7f2a-8c7a-4b9a-9d4a-5b7b6c1e3c51}"
   generationTool="ChatGPT"
   variableNamingConvention="flat">
@@ -15,23 +15,40 @@
     maxOutputDerivativeOrder="0" />
   <DefaultExperiment startTime="0" />
   <ModelVariables>
-    <ScalarVariable name="y" valueReference="0" causality="output" variability="discrete">
+    <ScalarVariable name="force" valueReference="0" causality="input" variability="continuous">
       <Real />
     </ScalarVariable>
-    <ScalarVariable name="index" valueReference="1" causality="output" variability="discrete">
+    <ScalarVariable name="acceleration" valueReference="1" causality="output" variability="continuous">
+      <Real />
+    </ScalarVariable>
+    <ScalarVariable name="velocity" valueReference="2" causality="output" variability="continuous">
+      <Real />
+    </ScalarVariable>
+    <ScalarVariable name="mass" valueReference="3" causality="parameter" variability="fixed">
+      <Real start="1.0" />
+    </ScalarVariable>
+    <ScalarVariable name="stepSize" valueReference="4" causality="parameter" variability="fixed">
+      <Real start="0.001" />
+    </ScalarVariable>
+    <ScalarVariable name="randomValue" valueReference="5" causality="output" variability="discrete">
+      <Real />
+    </ScalarVariable>
+    <ScalarVariable name="samplePeriod" valueReference="6" causality="parameter" variability="fixed">
+      <Real start="1.0" />
+    </ScalarVariable>
+    <ScalarVariable name="index" valueReference="7" causality="output" variability="discrete">
       <Integer />
     </ScalarVariable>
-    <ScalarVariable name="seed" valueReference="2" causality="parameter" variability="fixed">
+    <ScalarVariable name="seed" valueReference="8" causality="parameter" variability="fixed">
       <Integer start="1" />
-    </ScalarVariable>
-    <ScalarVariable name="samplePeriod" valueReference="3" causality="parameter" variability="fixed">
-      <Real start="1.0" />
     </ScalarVariable>
   </ModelVariables>
   <ModelStructure>
     <Outputs>
-      <Unknown index="1" />
       <Unknown index="2" />
+      <Unknown index="3" />
+      <Unknown index="6" />
+      <Unknown index="8" />
     </Outputs>
   </ModelStructure>
 </fmiModelDescription>

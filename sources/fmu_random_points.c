@@ -4,12 +4,18 @@
 
 #include "fmi2Functions.h"
 
+#define DEFAULT_STEP_SIZE 0.001
 #define NUM_POINTS 500
 
 typedef struct {
     fmi2CallbackFunctions callbacks;
     fmi2Real time;
     fmi2Real startTime;
+    fmi2Real force;
+    fmi2Real acceleration;
+    fmi2Real velocity;
+    fmi2Real mass;
+    fmi2Real stepSize;
     fmi2Real y;
     fmi2Integer idx;
     fmi2Integer seed;
@@ -20,7 +26,7 @@ typedef struct {
 } ModelInstance;
 
 static unsigned int lcg_next(unsigned int* state) {
-    *state = (*state) * 1664525u + 1013904223u;  
+    *state = (*state) * 1664525u + 1013904223u;
     return *state;
 }
 
@@ -87,6 +93,11 @@ FMI2_Export fmi2Component fmi2Instantiate(
     inst->callbacks = *functions;
     inst->time = 0.0;
     inst->startTime = 0.0;
+    inst->force = 0.0;
+    inst->acceleration = 0.0;
+    inst->velocity = 0.0;
+    inst->mass = 1.0;
+    inst->stepSize = DEFAULT_STEP_SIZE;
     inst->y = 0.0;
     inst->idx = 0;
     inst->seed = 1;
@@ -134,14 +145,15 @@ FMI2_Export fmi2Status fmi2ExitInitializationMode(fmi2Component c) {
     if (!inst) {
         return fmi2Error;
     }
-    if (inst->samplePeriod <= 0.0) {
+    if (inst->mass <= 0.0 || inst->stepSize <= 0.0 || inst->samplePeriod <= 0.0) {
         return fmi2Error;
     }
     generate_points(inst);
-    inst->initialized = fmi2True;
-    inst->inInitialization = fmi2False;
     inst->idx = 0;
     inst->y = inst->points[0];
+    inst->acceleration = inst->force / inst->mass;
+    inst->initialized = fmi2True;
+    inst->inInitialization = fmi2False;
     return fmi2OK;
 }
 
@@ -158,13 +170,30 @@ FMI2_Export fmi2Status fmi2DoStep(
         return fmi2Error;
     }
 
-    inst->time = currentCommunicationPoint + communicationStepSize;
+    if (communicationStepSize < 0.0) {
+        return fmi2Error;
+    }
+
+    inst->time = currentCommunicationPoint;
+
+    fmi2Real remaining = communicationStepSize;
+    while (remaining > 0.0) {
+        fmi2Real dt = inst->stepSize;
+        if (dt > remaining) {
+            dt = remaining;
+        }
+        inst->acceleration = inst->force / inst->mass;
+        inst->velocity += inst->acceleration * dt;
+        inst->time += dt;
+        remaining -= dt;
+    }
+
+    inst->acceleration = inst->force / inst->mass;
 
     fmi2Real tRel = inst->time - inst->startTime;
     int idx = (int)floor(tRel / inst->samplePeriod + 1e-12);
     if (idx < 0) idx = 0;
     if (idx >= NUM_POINTS) idx = NUM_POINTS - 1;
-
     inst->idx = (fmi2Integer)idx;
     inst->y = inst->points[idx];
 
@@ -193,6 +222,9 @@ FMI2_Export fmi2Status fmi2Reset(fmi2Component c) {
         return fmi2Error;
     }
     inst->time = inst->startTime;
+    inst->force = 0.0;
+    inst->acceleration = 0.0;
+    inst->velocity = 0.0;
     inst->y = 0.0;
     inst->idx = 0;
     inst->initialized = fmi2False;
@@ -210,8 +242,13 @@ FMI2_Export fmi2Status fmi2GetReal(
 
     for (size_t i = 0; i < nvr; ++i) {
         switch (vr[i]) {
-            case 0: value[i] = inst->y; break;
-            case 3: value[i] = inst->samplePeriod; break;
+            case 0: value[i] = inst->force; break;
+            case 1: value[i] = inst->acceleration; break;
+            case 2: value[i] = inst->velocity; break;
+            case 3: value[i] = inst->mass; break;
+            case 4: value[i] = inst->stepSize; break;
+            case 5: value[i] = inst->y; break;
+            case 6: value[i] = inst->samplePeriod; break;
             default: return fmi2Error;
         }
     }
@@ -226,13 +263,29 @@ FMI2_Export fmi2Status fmi2SetReal(
         return fmi2Error;
     }
 
-    if (!inst->inInitialization && inst->initialized) {
-        return fmi2OK;
-    }
-
     for (size_t i = 0; i < nvr; ++i) {
         switch (vr[i]) {
-            case 3: inst->samplePeriod = value[i]; break;
+            case 0:
+                inst->force = value[i];
+                break;
+            case 3:
+                if (!inst->inInitialization && inst->initialized) {
+                    return fmi2Error;
+                }
+                inst->mass = value[i];
+                break;
+            case 4:
+                if (!inst->inInitialization && inst->initialized) {
+                    return fmi2Error;
+                }
+                inst->stepSize = value[i];
+                break;
+            case 6:
+                if (!inst->inInitialization && inst->initialized) {
+                    return fmi2Error;
+                }
+                inst->samplePeriod = value[i];
+                break;
             default: return fmi2Error;
         }
     }
@@ -249,8 +302,8 @@ FMI2_Export fmi2Status fmi2GetInteger(
 
     for (size_t i = 0; i < nvr; ++i) {
         switch (vr[i]) {
-            case 1: value[i] = inst->idx; break;
-            case 2: value[i] = inst->seed; break;
+            case 7: value[i] = inst->idx; break;
+            case 8: value[i] = inst->seed; break;
             default: return fmi2Error;
         }
     }
@@ -271,7 +324,7 @@ FMI2_Export fmi2Status fmi2SetInteger(
 
     for (size_t i = 0; i < nvr; ++i) {
         switch (vr[i]) {
-            case 2: inst->seed = value[i]; break;
+            case 8: inst->seed = value[i]; break;
             default: return fmi2Error;
         }
     }
