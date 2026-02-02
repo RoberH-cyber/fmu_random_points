@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../FMI-Standard-2.0.5/headers"
+		}
+	],
+	"settings": {
+		"powershell.cwd": "fmu_random_points"
+	}
+}

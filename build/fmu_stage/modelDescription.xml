@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription
+  fmiVersion="2.0"
+  modelName="RandomPoints500"
+  guid="{9b5f7f2a-8c7a-4b9a-9d4a-5b7b6c1e3c51}"
+  generationTool="ChatGPT"
+  variableNamingConvention="flat">
+  <CoSimulation
+    modelIdentifier="RandomPoints500"
+    needsExecutionTool="false"
+    canHandleVariableCommunicationStepSize="true"
+    canHandleEvents="false"
+    canRejectSteps="false"
+    canInterpolateInputs="false"
+    maxOutputDerivativeOrder="0" />
+  <DefaultExperiment startTime="0" />
+  <ModelVariables>
+    <ScalarVariable name="y" valueReference="0" causality="output" variability="discrete">
+      <Real />
+    </ScalarVariable>
+    <ScalarVariable name="index" valueReference="1" causality="output" variability="discrete">
+      <Integer />
+    </ScalarVariable>
+    <ScalarVariable name="seed" valueReference="2" causality="parameter" variability="fixed">
+      <Integer start="1" />
+    </ScalarVariable>
+    <ScalarVariable name="samplePeriod" valueReference="3" causality="parameter" variability="fixed">
+      <Real start="1.0" />
+    </ScalarVariable>
+  </ModelVariables>
+  <ModelStructure>
+    <Outputs>
+      <Unknown index="1" />
+      <Unknown index="2" />
+    </Outputs>
+  </ModelStructure>
+</fmiModelDescription>

@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../FMI-Standard-2.0.5/headers"
+		},
+		{
+			"path": "../../fmu_InertModel"
+		}
+	],
+	"settings": {}
+}
